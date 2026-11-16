@@ -7,7 +7,10 @@ our $VERSION = "0.01";
 
 use Carp;
 use IO::File;
-use Command::Run;
+use IO::Handle;
+use File::Spec;
+use POSIX ();
+use Command::Run::Tmpfile;
 
 my @converter;
 
@@ -43,13 +46,9 @@ sub converter {
 sub open_input {
     my $file = shift;
 
-    # the standard input is read as it is
-    if ($file eq '-') {
-	my $fh = IO::File->new;
-	open $fh, '<&', \*STDIN or return undef;
-	binmode $fh, ':raw';
-	return $fh;
-    }
+    # The standard input is read as it is, by STDIN itself: another
+    # handle on it would not see what STDIN has read ahead
+    return *STDIN{IO} if $file eq '-';
 
     # The file is opened first: a file which can not be read is an
     # error of the caller with $! set, whatever the converter does
@@ -57,16 +56,55 @@ sub open_input {
     binmode $fh, ':raw';
 
     my $c = converter($file) // return $fh;
-    my $run = Command::Run->new(
-	command => [ @{$c->{command}}, $file ],
-	stderr  => 'capture',
-    )->update;
     # a converter which fails leaves the file as it is
-    return $fh if $run->result->{result} != 0;
+    convert($c->{command}, $file) // $fh;
+}
 
-    my $converted = $run->fh;
-    $converted->seek(0, 0) or return $fh;
-    binmode $converted, ':raw';
+# Run the command with the file name, in a process of its own, and
+# return the handle of a temporary file which has what it wrote to the
+# standard output, or undef when it fails.  The output goes to the file
+# as it is, byte for byte.  The standard error is thrown away.
+sub convert {
+    my($command, $file) = @_;
+    my @command = (@$command, $file);
+    my $tmp = Command::Run::Tmpfile->new(raw => 1);
+
+    # $? and $! of the caller are kept, and the child is waited for
+    # even when the caller ignores SIGCHLD
+    local($?, $!);
+    local $SIG{CHLD} = 'DEFAULT';
+    # what is in the buffers is not to be written twice
+    STDOUT->flush;
+    STDERR->flush;
+
+    my $pid = fork // return undef;
+    if ($pid == 0) {
+	# The child never returns to the program: it ends by _exit, so
+	# that the END blocks and the destructors of the program do not
+	# run here, even when open_input is called inside eval.
+	my $status = eval {
+	    open STDIN,  '<', File::Spec->devnull or die;
+	    open STDOUT, '>&', $tmp->fh           or die;
+	    open STDERR, '>', File::Spec->devnull or die;
+	    binmode STDOUT, ':raw';
+	    if (ref $command[0] eq 'CODE') {
+		my $code = shift @command;
+		$code->(@command);
+		STDOUT->flush;
+		0;
+	    } else {
+		no warnings 'exec';
+		exec { $command[0] } @command;
+		127;
+	    }
+	} // 1;
+	POSIX::_exit($status);
+    }
+    waitpid $pid, 0;
+    return undef if $? != 0;
+
+    my $converted = $tmp->fh;
+    $converted->seek(0, 0) or return undef;
     $converted;
 }
 
@@ -150,16 +188,19 @@ for the file to convert.
 
 I<command> is an array reference in the form of L<Command::Run>: an
 external command with its arguments, or a code reference with its
-arguments.  The file name is added as the last argument, and the
-standard output of the command is the converted content.  The command
-is not given to the shell.
+arguments.  The file name is added as the last argument, and what the
+command writes to the standard output is the converted content, taken
+byte for byte.  The command is not given to the shell.
 
     register(match => qr/\.gz$/, command => [ 'gzip', '-dc' ]);
 
     register(match   => sub { -B $_[0] },
              command => [ \&to_text, '--plain' ]);
 
-The standard error of the command is discarded.
+The command runs in a process of its own, with the standard error
+thrown away.  It fails by an exit status other than 0; a code
+reference fails by C<die>.  A code reference prints bytes, and the
+C<END> blocks of the program do not run in its process.
 
 =item B<clear>()
 
@@ -179,7 +220,8 @@ The handle has the C<:raw> layer.  Set the encoding by C<binmode>:
     my $fh = IO::Polarizer::open_input($file) or die "$file: $!";
     binmode $fh, ':encoding(utf8)';
 
-The name C<-> is the standard input, which is not converted.
+The name C<-> is the standard input, which is not converted: the
+handle is that of C<STDIN> itself, with the layers it has.
 
 =item B<load>(I<name>, ...)
 
@@ -211,6 +253,8 @@ not supported.
 =back
 
 =head1 SEE ALSO
+
+L<IO::Polarizer::skylighting>, L<Getopt::EX::Polarizer>
 
 L<Command::Run>
 

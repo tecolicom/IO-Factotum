@@ -49,16 +49,19 @@ Nothing is exported.
 
     _command_ is an array reference in the form of [Command::Run](https://metacpan.org/pod/Command%3A%3ARun): an
     external command with its arguments, or a code reference with its
-    arguments.  The file name is added as the last argument, and the
-    standard output of the command is the converted content.  The command
-    is not given to the shell.
+    arguments.  The file name is added as the last argument, and what the
+    command writes to the standard output is the converted content, taken
+    byte for byte.  The command is not given to the shell.
 
         register(match => qr/\.gz$/, command => [ 'gzip', '-dc' ]);
 
         register(match   => sub { -B $_[0] },
                  command => [ \&to_text, '--plain' ]);
 
-    The standard error of the command is discarded.
+    The command runs in a process of its own, with the standard error
+    thrown away.  It fails by an exit status other than 0; a code
+    reference fails by `die`.  A code reference prints bytes, and the
+    `END` blocks of the program do not run in its process.
 
 - **clear**()
 
@@ -78,7 +81,8 @@ Nothing is exported.
         my $fh = IO::Polarizer::open_input($file) or die "$file: $!";
         binmode $fh, ':encoding(utf8)';
 
-    The name `-` is the standard input, which is not converted.
+    The name `-` is the standard input, which is not converted: the
+    handle is that of `STDIN` itself, with the layers it has.
 
 - **load**(_name_, ...)
 
@@ -108,6 +112,8 @@ Nothing is exported.
     not supported.
 
 # SEE ALSO
+
+[IO::Polarizer::skylighting](https://metacpan.org/pod/IO%3A%3APolarizer%3A%3Askylighting), [Getopt::EX::Polarizer](https://metacpan.org/pod/Getopt%3A%3AEX%3A%3APolarizer)
 
 [Command::Run](https://metacpan.org/pod/Command%3A%3ARun)
 

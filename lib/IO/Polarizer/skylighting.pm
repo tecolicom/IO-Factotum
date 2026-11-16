@@ -7,11 +7,19 @@ use IO::Polarizer;
 
 our @COMMAND = qw(skylighting -f ansi -r -C 16 -S pygments);
 
+# A file larger than this is left as it is, 0 for no limit.  The
+# colored text is many times larger than the file, and takes time to
+# fold: some seconds for a megabyte.
+our $MAX_SIZE = 256 * 1024;
+
 # A file which has an escape character is left as it is: skylighting
 # takes the ANSI sequences in it apart, and exits with status 0.
+# So are an empty file, which would get a line, and a large one.
 sub match {
     my $file = shift;
     return 0 unless -f $file;
+    my $size = -s _ or return 0;
+    return 0 if $MAX_SIZE and $size > $MAX_SIZE;
     open my $fh, '<:raw', $file or return 0;
     local $/;
     my $content = <$fh> // return 0;
@@ -23,16 +31,18 @@ sub match {
 # puts \e[22;23;24m after every reset, and resets twice at the top.
 # A line which ends with two sequences gets an empty line after it
 # when it is folded by Text::ANSI::Fold and the text fills the width.
-# This is called in a process of its own (Command::Run), and exits
-# with the status of skylighting when it fails.
+# This is called in a process of its own (IO::Polarizer), and dies
+# when skylighting fails: the file is then read as it is.
 sub highlight {
     my $file = $_[-1];
-    my $pid = open my $fh, '-|', @COMMAND, $file or exit 1;
+    my $pid = open my $fh, '-|', @COMMAND, $file or die "skylighting: $!\n";
     my $out = do { local $/; <$fh> };
-    close $fh or exit(($? >> 8) || 1);
+    close $fh or die "skylighting failed\n";
     $out //= '';
     $out =~ s/\e\[0m\K\e\[22;23;24m//g;
     $out =~ s/\e\[0m\K(?:\e\[0m)+//g;
+    # CR LF stay together: the reset comes between them
+    $out =~ s/\r((?:\e\[[0-9;]*m)+)$/$1\r/mg;
     print $out;
 }
 
@@ -74,7 +84,10 @@ pandoc:
 
 The language is told by C<skylighting> from the name of the file.  A
 file it does not know, as one without an extension, is read as it is,
-and so is a file which has an escape character already.
+and so are a file which has an escape character already, an empty
+file, and a file larger than C<$IO::Polarizer::skylighting::MAX_SIZE>
+bytes (256 KB by default, 0 for no limit): the colored text is many
+times larger than the file and takes time to process.
 
 The C<pygments> style, the default of pandoc, has no background
 color, and C<-C 16> uses the 16 colors of the terminal, so that the

@@ -66,6 +66,27 @@ subtest 'skylighting: a line ends with one reset' => sub {
     is $text, "int x = 1;\n", 'the text is the same';
 };
 
+subtest 'skylighting: CRLF' => sub {
+    put 'crlf.c', "int x;\r\nint y;\r\n";
+    my $out = slurp(IO::Polarizer::open_input("$dir/crlf.c"));
+    like $out, qr/\e\[/, 'colored';
+    is scalar(() = $out =~ /\r\n/g), 2, 'CR and LF stay together';
+    is scalar(() = $out =~ /\R/g), 2, 'two line ends';
+};
+
+subtest 'skylighting: large and empty files' => sub {
+    put 'empty.c', "";
+    is slurp(IO::Polarizer::open_input("$dir/empty.c")), "", 'an empty file is empty';
+    put 'big.c', "int x;\n" x 100;
+    local $IO::Polarizer::skylighting::MAX_SIZE = 700;
+    like slurp(IO::Polarizer::open_input("$dir/big.c")), qr/\e\[/, 'within the limit';
+    local $IO::Polarizer::skylighting::MAX_SIZE = 699;
+    is slurp(IO::Polarizer::open_input("$dir/big.c")), "int x;\n" x 100,
+	'a file over the limit is as it is';
+    local $IO::Polarizer::skylighting::MAX_SIZE = 0;
+    like slurp(IO::Polarizer::open_input("$dir/big.c")), qr/\e\[/, 'no limit by 0';
+};
+
 subtest 'skylighting: file with ESC' => sub {
     is slurp(IO::Polarizer::open_input("$dir/e.c")), "\e[31mred\e[m\n",
 	'as it is';
