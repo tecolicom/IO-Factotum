@@ -93,9 +93,11 @@ sub convert {
 		STDOUT->flush;
 		0;
 	    } else {
+		# "or" keeps old perls from warning about a statement
+		# after exec
 		no warnings 'exec';
-		exec { $command[0] } @command;
-		127;
+		exec { $command[0] } @command
+		    or POSIX::_exit(127);
 	    }
 	} // 1;
 	POSIX::_exit($status);
