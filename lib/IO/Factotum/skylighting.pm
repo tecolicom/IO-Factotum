@@ -26,6 +26,40 @@ sub match {
     index($content, "\e") < 0;
 }
 
+# The names of interpreters which are not the names of the syntax
+my %SYNTAX = (
+    node  => 'javascript',
+    tclsh => 'tcl',
+    ksh   => 'bash',
+    dash  => 'bash',
+);
+
+# The syntax of a script, by the interpreter on its first line
+# (#!/usr/bin/env perl, #!/usr/bin/python3): the name of the command,
+# after env and its options and variables, without the version number.
+sub interpreter {
+    my $line = shift;
+    $line =~ /\A#!\s*(\S.*)/ or return undef;
+    my @word = split ' ', $1;
+    my $command = shift @word // return undef;
+    if ($command =~ m{(?:\A|/)env\z}) {
+	shift @word while @word and $word[0] =~ /\A-|=/;
+	$command = shift @word // return undef;
+    }
+    my $name = $command =~ s{.*/}{}r =~ s/[\d.]+\z//r;
+    return undef if $name eq '';
+    $SYNTAX{$name} // $name;
+}
+
+# Run skylighting with the arguments, and return what it writes, or
+# undef when it fails.  Its messages are thrown away by the caller.
+sub skylighting {
+    open my $fh, '-|', @COMMAND, @_ or return undef;
+    my $out = do { local $/; <$fh> };
+    close $fh or return undef;
+    $out // '';
+}
+
 # Run skylighting on the file given as the last argument, and print
 # what it gives without the sequences which do nothing: skylighting
 # puts \e[22;23;24m after every reset, and resets twice at the top.
@@ -35,10 +69,14 @@ sub match {
 # when skylighting fails: the file is then read as it is.
 sub highlight {
     my $file = $_[-1];
-    my $pid = open my $fh, '-|', @COMMAND, $file or die "skylighting: $!\n";
-    my $out = do { local $/; <$fh> };
-    close $fh or die "skylighting failed\n";
-    $out //= '';
+    # skylighting tells the language from the name of the file.  When
+    # it can not, the interpreter on the first line tells it.
+    my $out = skylighting($file) // do {
+	open my $fh, '<', $file or die "$file: $!\n";
+	my $syntax = interpreter(scalar <$fh> // '')
+	    // die "skylighting failed\n";
+	skylighting('-s', $syntax, $file) // die "skylighting failed\n";
+    };
     $out =~ s/\e\[0m\K\e\[22;23;24m//g;
     $out =~ s/\e\[0m\K(?:\e\[0m)+//g;
     # CR LF stay together: the reset comes between them
@@ -82,9 +120,11 @@ pandoc:
 
     skylighting -f ansi -r -C 16 -S pygments FILE
 
-The language is told by C<skylighting> from the name of the file.  A
-file it does not know, as one without an extension, is read as it is,
-and so are a file which has an escape character already, an empty
+The language is told by C<skylighting> from the name of the file.
+When the name does not tell it, as that of a script without an
+extension, the interpreter on the first line does (C<#!/usr/bin/env
+perl>, C<#!/bin/bash>).  A file whose language is not known is read as
+it is, and so are a file which has an escape character already, an empty
 file, and a file larger than C<$IO::Factotum::skylighting::MAX_SIZE>
 bytes (256 KB by default, 0 for no limit): the colored text is many
 times larger than the file and takes time to process.

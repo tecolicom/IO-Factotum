@@ -93,8 +93,47 @@ subtest 'skylighting: file with ESC' => sub {
 };
 
 subtest 'skylighting: no extension' => sub {
-    is slurp(IO::Factotum::open_input("$dir/noext")), "#!/bin/bash\necho\n",
-	'as it is';
+    put 'plain', "some text\nwith no interpreter\n";
+    is slurp(IO::Factotum::open_input("$dir/plain")),
+	"some text\nwith no interpreter\n", 'as it is';
+    put 'unknown', "#!/usr/local/bin/nosuchlanguage\ntext\n";
+    is slurp(IO::Factotum::open_input("$dir/unknown")),
+	"#!/usr/local/bin/nosuchlanguage\ntext\n", 'unknown interpreter: as it is';
+};
+
+# A file whose name does not tell the language is taken as the script
+# of the interpreter on its first line
+subtest 'skylighting: interpreter line' => sub {
+    my $text = sub { $_[0] =~ s/\e\[[0-9;]*m//gr };
+    for (
+	[ 'noext',   "#!/bin/bash\necho hello\n" ],
+	[ 'env',     "#!/usr/bin/env perl\nmy \$x = 1;\n" ],
+	[ 'envopt',  "#!/usr/bin/env -S perl -w\nmy \$x = 1;\n" ],
+	[ 'version', "#!/usr/bin/python3\nx = 1\n" ],
+	[ 'perl5',   "#! /usr/local/bin/perl5.36 -w\nmy \$x = 1;\n" ],
+	[ 'node',    "#!/usr/bin/env node\nvar x = 1;\n" ],
+    ) {
+	my($name, $content) = @$_;
+	put $name, $content;
+	my $out = slurp(IO::Factotum::open_input("$dir/$name"));
+	like $out, qr/\e\[/, "$name: colored";
+	is $text->($out), $content, "$name: the text is the same";
+    }
+};
+
+subtest 'skylighting: interpreter' => sub {
+    my $interp = \&IO::Factotum::skylighting::interpreter;
+    is $interp->("#!/bin/sh\n"), 'sh';
+    is $interp->("#!/usr/bin/env perl\n"), 'perl';
+    is $interp->("#!/usr/bin/env -S perl -w\n"), 'perl';
+    is $interp->("#!/usr/bin/env FOO=1 python3\n"), 'python';
+    is $interp->("#! /usr/local/bin/perl5.36 -w\n"), 'perl';
+    is $interp->("#!/usr/bin/env node\n"), 'javascript';
+    is $interp->("#!/usr/bin/tclsh8.6\n"), 'tcl';
+    is $interp->("#!/bin/ksh\n"), 'bash';
+    is $interp->("# not an interpreter line\n"), undef;
+    is $interp->("#!\n"), undef;
+    is $interp->(""), undef;
 };
 
 subtest 'skylighting: setup twice' => sub {
