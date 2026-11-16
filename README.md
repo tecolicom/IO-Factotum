@@ -80,6 +80,14 @@ Nothing is exported.
 
     The name `-` is the standard input, which is not converted.
 
+- **load**(_name_, ...)
+
+    Register the converters of the modules `IO::Polarizer::`_name_, by
+    calling their `setup` function.  It dies when there is no such
+    module.
+
+        IO::Polarizer::load('skylighting');
+
 - **tie\_argv**()
 
     Tie `ARGV`, so that `<>` reads the files of `@ARGV` by

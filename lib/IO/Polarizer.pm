@@ -70,6 +70,21 @@ sub open_input {
     $converted;
 }
 
+# Register the converters of IO::Polarizer::NAME by their names
+sub load {
+    for my $name (@_) {
+	$name =~ /\A\w+(?:::\w+)*\z/
+	    or croak "IO::Polarizer: $name: invalid converter name";
+	my $module = __PACKAGE__ . "::$name";
+	eval "require $module; 1"
+	    or die "IO::Polarizer: $name: no such converter\n$@";
+	my $setup = $module->can('setup')
+	    or die "IO::Polarizer: $module has no setup function\n";
+	$setup->();
+    }
+    return;
+}
+
 sub tie_argv {
     return if tied *ARGV;
     require IO::Polarizer::ARGV;
@@ -165,6 +180,14 @@ The handle has the C<:raw> layer.  Set the encoding by C<binmode>:
     binmode $fh, ':encoding(utf8)';
 
 The name C<-> is the standard input, which is not converted.
+
+=item B<load>(I<name>, ...)
+
+Register the converters of the modules C<IO::Polarizer::>I<name>, by
+calling their C<setup> function.  It dies when there is no such
+module.
+
+    IO::Polarizer::load('skylighting');
 
 =item B<tie_argv>()
 

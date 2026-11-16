@@ -9,18 +9,11 @@ use IO::Polarizer;
 # IO::Polarizer::NAME is registered.  ARGV is not tied here; the
 # program opens its files by IO::Polarizer::open_input.
 sub load {
+    my @names;
     while (my($name, $val) = splice @_, 0, 2) {
-	next unless $val;
-	$name =~ /\A\w+(?:::\w+)*\z/
-	    or die "Polarizer: $name: invalid converter name\n";
-	my $module = "IO::Polarizer::$name";
-	eval "require $module; 1"
-	    or die "Polarizer: $name: no such converter\n$@";
-	my $setup = $module->can('setup')
-	    or die "Polarizer: $module has no setup function\n";
-	$setup->();
+	push @names, $name if $val;
     }
-    return;
+    IO::Polarizer::load(@names);
 }
 
 1;
@@ -38,15 +31,18 @@ Getopt::EX::Polarizer - Getopt::EX module to load IO::Polarizer converters
 =head1 DESCRIPTION
 
 This is a module of L<Getopt::EX> for the commands which open their
-files by C<IO::Polarizer::open_input>, as L<ansicolumn|App::ansicolumn>
-does when L<IO::Polarizer> is loaded.
+files by C<IO::Polarizer::open_input>.
+
+Note that L<optex|App::optex> takes a C<-M> option after the command
+name as its own module, when it can load it.  L<ansicolumn|App::ansicolumn>
+has the C<--polarizer> option, which does the same and is not taken.
 
 =over 4
 
 =item B<load>=I<name>
 
-Register the converter of C<IO::Polarizer::>I<name>, by calling its
-C<setup> function.
+Register the converter of C<IO::Polarizer::>I<name>
+(C<IO::Polarizer::load>).
 
 =back
 

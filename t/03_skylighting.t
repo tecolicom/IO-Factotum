@@ -78,6 +78,21 @@ subtest 'Getopt::EX::Polarizer: load' => sub {
     like $out, qr/\e\[/, 'has colors';
 };
 
+subtest 'load' => sub {
+    my $script = put 'ioload.pl', q{
+	use IO::Polarizer;
+	IO::Polarizer::load('skylighting');
+	print tied(*ARGV) ? "tied\n" : "not tied\n";
+	print IO::Polarizer::open_input(shift)->getlines;
+    };
+    my $out = qx{$^X -I"$lib" "$script" "$dir/a.c" 2>&1};
+    like $out, qr/\Anot tied\n/, 'ARGV is not tied';
+    like $out, qr/\e\[/, 'has colors';
+    ok !eval { IO::Polarizer::load('nosuchconverter'); 1 }, 'unknown name dies';
+    like $@, qr/nosuchconverter: no such converter/, 'with the name';
+    ok !eval { IO::Polarizer::load('a b'); 1 }, 'invalid name dies';
+};
+
 subtest 'Getopt::EX::Polarizer: unknown name' => sub {
     my $script = put 'unknown.pl', q{
 	use Getopt::EX::Polarizer;

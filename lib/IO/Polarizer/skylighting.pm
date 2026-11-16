@@ -44,7 +44,7 @@ IO::Polarizer::skylighting - syntax highlight by skylighting
 
     perl -MIO::Polarizer::skylighting -ne 'print' file.c
 
-    ansicolumn -MPolarizer::load=skylighting file.c file.h
+    ansicolumn --polarizer=skylighting file.c file.h
 
 =head1 DESCRIPTION
 
