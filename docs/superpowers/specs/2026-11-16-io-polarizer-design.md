@@ -152,3 +152,31 @@ IO::Polarizer を作る。偏光フィルターのように、元のファイル
 ## 速さの目安
 
 ファイルごとに skylighting が 1 回起動するので、1 ファイルあたり約 0.02 秒増える。
+
+## 実装で変わったこと（2026-11-16）
+
+- **ansicolumn への渡し方は `--polarizer=NAME` オプション**：計画では
+  `-MPolarizer::load=skylighting` を ansicolumn に渡すつもりだったが、optex は
+  コマンド名の後の `-M` を、読み込めるかぎり自分のモジュールとして取ってしまう
+  （`BASECLASS => ['', 'App::optex', 'Getopt::EX']`、`IGNORE_NO_MODULE`）。
+  IO-Polarizer を入れた環境では `Getopt::EX::Polarizer` が optex に読み込まれ、
+  ansicolumn に届かない。そのため ansicolumn に `--polarizer=NAME` を足し、
+  nup は up.pm の `--highlight` を通じてこれを渡す。
+- **`IO::Polarizer::load(@names)`**：名前から `IO::Polarizer::NAME` の `setup` を
+  呼ぶ。`--polarizer` と `Getopt::EX::Polarizer::load` の両方がこれを使う。
+- **`setup` と `import` を分けた**：`IO::Polarizer::skylighting` の `setup` は
+  変換を登録するだけで、ARGV を tie するのは `use` / `-M` で読み込んだとき
+  （`import`）だけ。ansicolumn の中では ARGV を tie しない。
+- **skylighting の出力から余分なシーケンスを取り除く**：skylighting はリセットの
+  たびに `\e[22;23;24m` を付ける。行末にシーケンスが 2 つ続くと、文字が幅ちょうどの
+  行を Text::ANSI::Fold が折り返したとき、次に空行が 1 行入る。変換の中で
+  `\e[0m` の後の `\e[22;23;24m` と、重なった `\e[0m` を取り除く。
+- **IO::Polarizer はインストールしていない**：開発中の確認は `PERL5LIB` で行った。
+
+### 残っている違い
+
+- 色を付けると、折り返しの位置が変わる行がある（`int(` の `(` が次の行に送られる
+  か、など）。Text::ANSI::Fold の禁則が、トークンの間のシーケンスをまたいで
+  働かないため。up.pm と script/nup を 2 段で表示したとき、1519 行のうち 4 行。
+- 変換の出力は Command::Run が UTF-8 として読む。UTF-8 でないファイルを変換すると、
+  文字が化ける可能性がある。確かめていない。
