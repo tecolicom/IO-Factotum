@@ -1,4 +1,4 @@
-package IO::Polarizer;
+package IO::Factotum;
 
 use v5.16;
 use warnings;
@@ -110,16 +110,16 @@ sub convert {
     $converted;
 }
 
-# Register the converters of IO::Polarizer::NAME by their names
+# Register the converters of IO::Factotum::NAME by their names
 sub load {
     for my $name (@_) {
 	$name =~ /\A\w+(?:::\w+)*\z/
-	    or croak "IO::Polarizer: $name: invalid converter name";
+	    or croak "IO::Factotum: $name: invalid converter name";
 	my $module = __PACKAGE__ . "::$name";
 	eval "require $module; 1"
-	    or die "IO::Polarizer: $name: no such converter\n$@";
+	    or die "IO::Factotum: $name: no such converter\n$@";
 	my $setup = $module->can('setup')
-	    or die "IO::Polarizer: $module has no setup function\n";
+	    or die "IO::Factotum: $module has no setup function\n";
 	$setup->();
     }
     return;
@@ -127,8 +127,8 @@ sub load {
 
 sub tie_argv {
     return if tied *ARGV;
-    require IO::Polarizer::ARGV;
-    tie *ARGV, 'IO::Polarizer::ARGV';
+    require IO::Factotum::ARGV;
+    tie *ARGV, 'IO::Factotum::ARGV';
     return;
 }
 
@@ -140,18 +140,18 @@ __END__
 
 =head1 NAME
 
-IO::Polarizer - read files through a converter chosen by their names
+IO::Factotum - read files through a converter chosen by their names
 
 =head1 SYNOPSIS
 
-    use IO::Polarizer;
+    use IO::Factotum;
 
-    IO::Polarizer::register(
+    IO::Factotum::register(
         match   => qr/\.gz$/,
         command => [ 'gzip', '-dc' ],
     );
 
-    my $fh = IO::Polarizer::open_input($file) or die "$file: $!";
+    my $fh = IO::Factotum::open_input($file) or die "$file: $!";
     while (<$fh>) {
         ...
     }
@@ -162,12 +162,12 @@ Version 0.01
 
 =head1 DESCRIPTION
 
-A polarizer is a filter put in front of a lens: the subject is not
-touched, and what comes through looks different.  This module does
-the same to files.  A file is opened through a converter chosen by
-its name, and the handle gives the output of the converter instead of
-the content of the file.  The file itself is not changed, and the
-program keeps its name.
+A factotum is a person who does all kinds of work for someone.  This
+module is one for the files a program reads: tell it what to do with
+which files, and it gives them to the program ready to read.  A file
+is opened through a converter chosen by its name, and the handle gives
+the output of the converter instead of the content of the file.  The
+file itself is not changed, and the program keeps its name.
 
 Converters are registered with a condition on the file name.  A file
 which no converter takes, and a file whose converter fails, is read
@@ -219,7 +219,7 @@ It returns C<undef> with C<$!> set when the file can not be opened.
 
 The handle has the C<:raw> layer.  Set the encoding by C<binmode>:
 
-    my $fh = IO::Polarizer::open_input($file) or die "$file: $!";
+    my $fh = IO::Factotum::open_input($file) or die "$file: $!";
     binmode $fh, ':encoding(utf8)';
 
 The name C<-> is the standard input, which is not converted: the
@@ -227,11 +227,11 @@ handle is that of C<STDIN> itself, with the layers it has.
 
 =item B<load>(I<name>, ...)
 
-Register the converters of the modules C<IO::Polarizer::>I<name>, by
+Register the converters of the modules C<IO::Factotum::>I<name>, by
 calling their C<setup> function.  It dies when there is no such
 module.
 
-    IO::Polarizer::load('skylighting');
+    IO::Factotum::load('skylighting');
 
 =item B<tie_argv>()
 
@@ -239,7 +239,7 @@ Tie C<ARGV>, so that C<E<lt>E<gt>> reads the files of C<@ARGV> by
 C<open_input>.  A program which reads by C<E<lt>E<gt>> gets the
 converted content with no change in it:
 
-    IO::Polarizer::tie_argv();
+    IO::Factotum::tie_argv();
     while (<>) {
         print "$ARGV: $_";
     }
@@ -256,7 +256,7 @@ not supported.
 
 =head1 SEE ALSO
 
-L<IO::Polarizer::skylighting>, L<Getopt::EX::Polarizer>
+L<IO::Factotum::skylighting>, L<Getopt::EX::Factotum>
 
 L<Command::Run>
 

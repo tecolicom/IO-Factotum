@@ -1,9 +1,9 @@
-package IO::Polarizer::skylighting;
+package IO::Factotum::skylighting;
 
 use v5.16;
 use warnings;
 
-use IO::Polarizer;
+use IO::Factotum;
 
 our @COMMAND = qw(skylighting -f ansi -r -C 16 -S pygments);
 
@@ -31,7 +31,7 @@ sub match {
 # puts \e[22;23;24m after every reset, and resets twice at the top.
 # A line which ends with two sequences gets an empty line after it
 # when it is folded by Text::ANSI::Fold and the text fills the width.
-# This is called in a process of its own (IO::Polarizer), and dies
+# This is called in a process of its own (IO::Factotum), and dies
 # when skylighting fails: the file is then read as it is.
 sub highlight {
     my $file = $_[-1];
@@ -49,13 +49,13 @@ sub highlight {
 my $done;
 sub setup {
     return if $done++;
-    IO::Polarizer::register(match => \&match, command => [ \&highlight ]);
+    IO::Factotum::register(match => \&match, command => [ \&highlight ]);
     return;
 }
 
 sub import {
     setup();
-    IO::Polarizer::tie_argv();
+    IO::Factotum::tie_argv();
 }
 
 1;
@@ -66,17 +66,17 @@ __END__
 
 =head1 NAME
 
-IO::Polarizer::skylighting - syntax highlight by skylighting
+IO::Factotum::skylighting - syntax highlight by skylighting
 
 =head1 SYNOPSIS
 
-    perl -MIO::Polarizer::skylighting -ne 'print' file.c
+    perl -MIO::Factotum::skylighting -ne 'print' file.c
 
-    ansicolumn --polarizer=skylighting file.c file.h
+    ansicolumn --factotum=skylighting file.c file.h
 
 =head1 DESCRIPTION
 
-This module registers a converter of L<IO::Polarizer> which colors
+This module registers a converter of L<IO::Factotum> which colors
 source files by the C<skylighting> command, the syntax highlighter of
 pandoc:
 
@@ -85,7 +85,7 @@ pandoc:
 The language is told by C<skylighting> from the name of the file.  A
 file it does not know, as one without an extension, is read as it is,
 and so are a file which has an escape character already, an empty
-file, and a file larger than C<$IO::Polarizer::skylighting::MAX_SIZE>
+file, and a file larger than C<$IO::Factotum::skylighting::MAX_SIZE>
 bytes (256 KB by default, 0 for no limit): the colored text is many
 times larger than the file and takes time to process.
 
@@ -97,7 +97,7 @@ The sequences which do nothing in the output of C<skylighting>, as
 C<ESC[22;23;24m> after every reset, are taken away.
 
 Loaded by C<use> or C<-M>, it also ties C<ARGV>
-(C<IO::Polarizer::tie_argv>), and a program which reads by
+(C<IO::Factotum::tie_argv>), and a program which reads by
 C<E<lt>E<gt>> gets the colored text.  C<setup> only registers the
 converter.
 
@@ -110,7 +110,7 @@ distributions:
 
 =head1 SEE ALSO
 
-L<IO::Polarizer>, L<Getopt::EX::Polarizer>
+L<IO::Factotum>, L<Getopt::EX::Factotum>
 
 L<https://github.com/jgm/skylighting>
 

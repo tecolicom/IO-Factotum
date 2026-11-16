@@ -3,7 +3,7 @@ use warnings;
 use Test::More 0.98;
 use File::Temp qw(tempdir);
 
-use IO::Polarizer;
+use IO::Factotum;
 
 my $dir = tempdir(CLEANUP => 1);
 
@@ -28,89 +28,89 @@ put 'a b.up', "hello\n";
 my @upper = (match => qr/\.up$/, command => ['perl', '-pe', '$_ = uc']);
 
 subtest 'open_input: converted' => sub {
-    IO::Polarizer::clear();
-    IO::Polarizer::register(@upper);
-    my $fh = IO::Polarizer::open_input("$dir/a.up");
+    IO::Factotum::clear();
+    IO::Factotum::register(@upper);
+    my $fh = IO::Factotum::open_input("$dir/a.up");
     isa_ok $fh, 'IO::File';
     is slurp($fh), "HELLO\n", 'content is converted';
-    is slurp(IO::Polarizer::open_input("$dir/a.up")), "HELLO\n", 'again';
+    is slurp(IO::Factotum::open_input("$dir/a.up")), "HELLO\n", 'again';
 };
 
 subtest 'open_input: not matched' => sub {
-    IO::Polarizer::clear();
-    IO::Polarizer::register(@upper);
-    my $fh = IO::Polarizer::open_input("$dir/a.txt");
+    IO::Factotum::clear();
+    IO::Factotum::register(@upper);
+    my $fh = IO::Factotum::open_input("$dir/a.txt");
     isa_ok $fh, 'IO::File';
     is slurp($fh), "hello\n", 'content is as it is';
 };
 
 subtest 'open_input: no converter' => sub {
-    IO::Polarizer::clear();
-    is slurp(IO::Polarizer::open_input("$dir/a.up")), "hello\n";
+    IO::Factotum::clear();
+    is slurp(IO::Factotum::open_input("$dir/a.up")), "hello\n";
 };
 
 subtest 'open_input: converter fails' => sub {
-    IO::Polarizer::clear();
-    IO::Polarizer::register(match => qr/\.up$/, command => ['false']);
-    is slurp(IO::Polarizer::open_input("$dir/a.up")), "hello\n",
+    IO::Factotum::clear();
+    IO::Factotum::register(match => qr/\.up$/, command => ['false']);
+    is slurp(IO::Factotum::open_input("$dir/a.up")), "hello\n",
 	'the file itself is read';
 };
 
 subtest 'open_input: first match wins' => sub {
-    IO::Polarizer::clear();
-    IO::Polarizer::register(@upper);
-    IO::Polarizer::register(match => qr/\.up$/, command => ['false']);
-    is slurp(IO::Polarizer::open_input("$dir/a.up")), "HELLO\n";
+    IO::Factotum::clear();
+    IO::Factotum::register(@upper);
+    IO::Factotum::register(match => qr/\.up$/, command => ['false']);
+    is slurp(IO::Factotum::open_input("$dir/a.up")), "HELLO\n";
 };
 
 subtest 'open_input: code reference' => sub {
-    IO::Polarizer::clear();
-    IO::Polarizer::register(
+    IO::Factotum::clear();
+    IO::Factotum::register(
 	match   => sub { $_[0] =~ /\.up$/ },
 	command => [ sub {
 	    open my $f, '<', $_[-1] or die;
 	    print scalar reverse do { local $/; <$f> };
 	} ]);
-    is slurp(IO::Polarizer::open_input("$dir/a.up")), "\nolleh";
-    is slurp(IO::Polarizer::open_input("$dir/a.txt")), "hello\n",
+    is slurp(IO::Factotum::open_input("$dir/a.up")), "\nolleh";
+    is slurp(IO::Factotum::open_input("$dir/a.txt")), "hello\n",
 	'code match is false';
 };
 
 subtest 'open_input: file name with a space' => sub {
-    IO::Polarizer::clear();
-    IO::Polarizer::register(@upper);
-    is slurp(IO::Polarizer::open_input("$dir/a b.up")), "HELLO\n";
+    IO::Factotum::clear();
+    IO::Factotum::register(@upper);
+    is slurp(IO::Factotum::open_input("$dir/a b.up")), "HELLO\n";
 };
 
 subtest 'open_input: missing file' => sub {
-    IO::Polarizer::clear();
-    IO::Polarizer::register(@upper);
-    my $fh = IO::Polarizer::open_input("$dir/none.txt");
+    IO::Factotum::clear();
+    IO::Factotum::register(@upper);
+    my $fh = IO::Factotum::open_input("$dir/none.txt");
     ok !defined $fh, 'undef';
     ok $!{ENOENT}, 'errno';
-    $fh = IO::Polarizer::open_input("$dir/none.up");
+    $fh = IO::Factotum::open_input("$dir/none.up");
     ok !defined $fh, 'undef for a name that matches';
     ok $!{ENOENT}, 'errno';
 };
 
 subtest 'open_input: stdin' => sub {
     my $script = put 'stdin.pl', q{
-	use IO::Polarizer;
-	IO::Polarizer::register(match => qr/./, command => ['perl', '-pe', '$_ = uc']);
-	print IO::Polarizer::open_input('-')->getlines;
+	use IO::Factotum;
+	IO::Factotum::register(match => qr/./, command => ['perl', '-pe', '$_ = uc']);
+	print IO::Factotum::open_input('-')->getlines;
     };
     my $out = qx{echo hello | $^X -Ilib "$script"};
     is $out, "hello\n", 'stdin is not converted';
 };
 
 subtest 'open_input: bytes' => sub {
-    IO::Polarizer::clear();
+    IO::Factotum::clear();
     my $utf8 = "\xe3\x81\x82\n";	# U+3042 in UTF-8
     put 'j.up',  $utf8;
     put 'j.txt', $utf8;
-    IO::Polarizer::register(match => qr/\.up$/, command => ['cat']);
-    is slurp(IO::Polarizer::open_input("$dir/j.up")),  $utf8, 'converted';
-    is slurp(IO::Polarizer::open_input("$dir/j.txt")), $utf8, 'as it is';
+    IO::Factotum::register(match => qr/\.up$/, command => ['cat']);
+    is slurp(IO::Factotum::open_input("$dir/j.up")),  $utf8, 'converted';
+    is slurp(IO::Factotum::open_input("$dir/j.txt")), $utf8, 'as it is';
 };
 
 done_testing;

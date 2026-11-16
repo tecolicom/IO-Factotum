@@ -1,18 +1,18 @@
-
+[![Actions Status](https://github.com/tecolicom/IO-Factotum/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/tecolicom/IO-Factotum/actions?workflow=test) [![MetaCPAN Release](https://badge.fury.io/pl/IO-Factotum.svg)](https://metacpan.org/release/IO-Factotum)
 # NAME
 
-IO::Polarizer - read files through a converter chosen by their names
+IO::Factotum - read files through a converter chosen by their names
 
 # SYNOPSIS
 
-    use IO::Polarizer;
+    use IO::Factotum;
 
-    IO::Polarizer::register(
+    IO::Factotum::register(
         match   => qr/\.gz$/,
         command => [ 'gzip', '-dc' ],
     );
 
-    my $fh = IO::Polarizer::open_input($file) or die "$file: $!";
+    my $fh = IO::Factotum::open_input($file) or die "$file: $!";
     while (<$fh>) {
         ...
     }
@@ -23,12 +23,12 @@ Version 0.01
 
 # DESCRIPTION
 
-A polarizer is a filter put in front of a lens: the subject is not
-touched, and what comes through looks different.  This module does
-the same to files.  A file is opened through a converter chosen by
-its name, and the handle gives the output of the converter instead of
-the content of the file.  The file itself is not changed, and the
-program keeps its name.
+A factotum is a person who does all kinds of work for someone.  This
+module is one for the files a program reads: tell it what to do with
+which files, and it gives them to the program ready to read.  A file
+is opened through a converter chosen by its name, and the handle gives
+the output of the converter instead of the content of the file.  The
+file itself is not changed, and the program keeps its name.
 
 Converters are registered with a condition on the file name.  A file
 which no converter takes, and a file whose converter fails, is read
@@ -78,7 +78,7 @@ Nothing is exported.
 
     The handle has the `:raw` layer.  Set the encoding by `binmode`:
 
-        my $fh = IO::Polarizer::open_input($file) or die "$file: $!";
+        my $fh = IO::Factotum::open_input($file) or die "$file: $!";
         binmode $fh, ':encoding(utf8)';
 
     The name `-` is the standard input, which is not converted: the
@@ -86,11 +86,11 @@ Nothing is exported.
 
 - **load**(_name_, ...)
 
-    Register the converters of the modules `IO::Polarizer::`_name_, by
+    Register the converters of the modules `IO::Factotum::`_name_, by
     calling their `setup` function.  It dies when there is no such
     module.
 
-        IO::Polarizer::load('skylighting');
+        IO::Factotum::load('skylighting');
 
 - **tie\_argv**()
 
@@ -98,7 +98,7 @@ Nothing is exported.
     `open_input`.  A program which reads by `<>` gets the
     converted content with no change in it:
 
-        IO::Polarizer::tie_argv();
+        IO::Factotum::tie_argv();
         while (<>) {
             print "$ARGV: $_";
         }
@@ -113,7 +113,7 @@ Nothing is exported.
 
 # SEE ALSO
 
-[IO::Polarizer::skylighting](https://metacpan.org/pod/IO%3A%3APolarizer%3A%3Askylighting), [Getopt::EX::Polarizer](https://metacpan.org/pod/Getopt%3A%3AEX%3A%3APolarizer)
+[IO::Factotum::skylighting](https://metacpan.org/pod/IO%3A%3AFactotum%3A%3Askylighting), [Getopt::EX::Factotum](https://metacpan.org/pod/Getopt%3A%3AEX%3A%3AFactotum)
 
 [Command::Run](https://metacpan.org/pod/Command%3A%3ARun)
 

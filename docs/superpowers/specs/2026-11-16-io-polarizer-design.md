@@ -1,5 +1,10 @@
 # IO::Polarizer 設計
 
+> **名前について（2026-11-16）**: リリースの前に、名前を IO::Factotum に変えた。
+> factotum は「頼まれた仕事を何でも引き受ける人」。この文書は、設計したときの
+> 名前（IO::Polarizer、`--polarizer`）のまま残してある。読むときは
+> Polarizer を Factotum、`--polarizer` を `--factotum` に読み替える。
+
 2026-11-16
 
 ## 目的

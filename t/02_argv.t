@@ -24,9 +24,9 @@ my $lib = File::Spec->rel2abs('lib');
 sub run {
     my($body, @args) = @_;
     my $script = put 'script.pl', <<"END";
-use IO::Polarizer;
-IO::Polarizer::register(match => qr/./, command => ['perl', '-pe', '\$_ = uc']);
-IO::Polarizer::tie_argv();
+use IO::Factotum;
+IO::Factotum::register(match => qr/./, command => ['perl', '-pe', '\$_ = uc']);
+IO::Factotum::tie_argv();
 \$| = 1;
 $body
 END
@@ -71,7 +71,7 @@ is run('while (<>) { print "$ARGV: $_" }', 'f1 none f2'),
     "f1: ONE\nf1: TWO\nCan't open none: No such file or directory\nf2: THREE\n",
     'argv: a file which can not be opened is skipped';
 
-is run('IO::Polarizer::tie_argv(); while (<>) { print }', 'f2'),
+is run('IO::Factotum::tie_argv(); while (<>) { print }', 'f2'),
     "THREE\n",
     'argv: tie_argv twice';
 

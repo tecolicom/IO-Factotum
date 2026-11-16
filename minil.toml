@@ -1,4 +1,4 @@
-name = "IO-Polarizer"
+name = "IO-Factotum"
 badges = [ 'github-actions/test', 'metacpan' ]
 authority = "cpan:UTASHIRO"
 

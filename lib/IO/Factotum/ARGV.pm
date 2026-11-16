@@ -1,9 +1,9 @@
-package IO::Polarizer::ARGV;
+package IO::Factotum::ARGV;
 
 use v5.16;
 use warnings;
 
-require IO::Polarizer;
+require IO::Factotum;
 
 sub TIEHANDLE {
     my $class = shift;
@@ -19,7 +19,7 @@ sub _next {
     $self->{fh} = undef;
     my @stdin = !$self->{started}++ && !@ARGV ? ('-') : ();
     while (defined(my $file = @stdin ? shift @stdin : shift @ARGV)) {
-	if (my $fh = IO::Polarizer::open_input($file)) {
+	if (my $fh = IO::Factotum::open_input($file)) {
 	    $main::ARGV = $file;
 	    return $self->{fh} = $fh;
 	}
@@ -84,11 +84,11 @@ __END__
 
 =head1 NAME
 
-IO::Polarizer::ARGV - tie class to read the files of @ARGV by IO::Polarizer
+IO::Factotum::ARGV - tie class to read the files of @ARGV by IO::Factotum
 
 =head1 SYNOPSIS
 
-    IO::Polarizer::tie_argv();
+    IO::Factotum::tie_argv();
 
     while (<>) {
         print "$ARGV: $_";
@@ -96,7 +96,7 @@ IO::Polarizer::ARGV - tie class to read the files of @ARGV by IO::Polarizer
 
 =head1 DESCRIPTION
 
-This is the class C<ARGV> is tied to by C<IO::Polarizer::tie_argv>.
-See L<IO::Polarizer>.
+This is the class C<ARGV> is tied to by C<IO::Factotum::tie_argv>.
+See L<IO::Factotum>.
 
 =cut

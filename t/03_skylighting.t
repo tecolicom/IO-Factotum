@@ -9,7 +9,7 @@ BEGIN {
     plan skip_all => 'skylighting is not installed' unless $found;
 }
 
-use IO::Polarizer;
+use IO::Factotum;
 
 my $dir = tempdir(CLEANUP => 1);
 my $lib = File::Spec->rel2abs('lib');
@@ -34,12 +34,12 @@ put 'noext', "#!/bin/bash\necho\n";
 
 # the module registers its converter, without tying ARGV when it is
 # only required
-require IO::Polarizer::skylighting;
-IO::Polarizer::skylighting::setup();
+require IO::Factotum::skylighting;
+IO::Factotum::skylighting::setup();
 ok !tied(*ARGV), 'setup does not tie ARGV';
 
 subtest 'skylighting: C source' => sub {
-    my $out = slurp(IO::Polarizer::open_input("$dir/a.c"));
+    my $out = slurp(IO::Factotum::open_input("$dir/a.c"));
     like $out, qr/\e\[/, 'has colors';
     like $out, qr/int/, 'has the text';
     # -S pygments has no background, -C 16 no 256 or RGB colors
@@ -48,7 +48,7 @@ subtest 'skylighting: C source' => sub {
 
 subtest 'skylighting: empty lines stay empty' => sub {
     put 'b.c', "int x;\n\nint y;\n";
-    my @lines = IO::Polarizer::open_input("$dir/b.c")->getlines;
+    my @lines = IO::Factotum::open_input("$dir/b.c")->getlines;
     is scalar @lines, 3, 'three lines';
     like $lines[0], qr/\e\[/, 'colored';
     is $lines[1], "\n", 'the empty line has no sequence';
@@ -58,7 +58,7 @@ subtest 'skylighting: empty lines stay empty' => sub {
 # with two sequences makes Text::ANSI::Fold give an empty line after it
 # when the text fills the width.
 subtest 'skylighting: a line ends with one reset' => sub {
-    my $out = slurp(IO::Polarizer::open_input("$dir/a.c"));
+    my $out = slurp(IO::Factotum::open_input("$dir/a.c"));
     unlike $out, qr/\e\[[0-9;]*m\e\[[0-9;]*m$/m, 'not two sequences at the end';
     unlike $out, qr/\e\[0m\e\[0m/, 'no reset twice';
     like $out, qr/\e\[0m$/m, 'reset at the end';
@@ -68,7 +68,7 @@ subtest 'skylighting: a line ends with one reset' => sub {
 
 subtest 'skylighting: CRLF' => sub {
     put 'crlf.c', "int x;\r\nint y;\r\n";
-    my $out = slurp(IO::Polarizer::open_input("$dir/crlf.c"));
+    my $out = slurp(IO::Factotum::open_input("$dir/crlf.c"));
     like $out, qr/\e\[/, 'colored';
     is scalar(() = $out =~ /\r\n/g), 2, 'CR and LF stay together';
     is scalar(() = $out =~ /\R/g), 2, 'two line ends';
@@ -76,43 +76,43 @@ subtest 'skylighting: CRLF' => sub {
 
 subtest 'skylighting: large and empty files' => sub {
     put 'empty.c', "";
-    is slurp(IO::Polarizer::open_input("$dir/empty.c")), "", 'an empty file is empty';
+    is slurp(IO::Factotum::open_input("$dir/empty.c")), "", 'an empty file is empty';
     put 'big.c', "int x;\n" x 100;
-    local $IO::Polarizer::skylighting::MAX_SIZE = 700;
-    like slurp(IO::Polarizer::open_input("$dir/big.c")), qr/\e\[/, 'within the limit';
-    local $IO::Polarizer::skylighting::MAX_SIZE = 699;
-    is slurp(IO::Polarizer::open_input("$dir/big.c")), "int x;\n" x 100,
+    local $IO::Factotum::skylighting::MAX_SIZE = 700;
+    like slurp(IO::Factotum::open_input("$dir/big.c")), qr/\e\[/, 'within the limit';
+    local $IO::Factotum::skylighting::MAX_SIZE = 699;
+    is slurp(IO::Factotum::open_input("$dir/big.c")), "int x;\n" x 100,
 	'a file over the limit is as it is';
-    local $IO::Polarizer::skylighting::MAX_SIZE = 0;
-    like slurp(IO::Polarizer::open_input("$dir/big.c")), qr/\e\[/, 'no limit by 0';
+    local $IO::Factotum::skylighting::MAX_SIZE = 0;
+    like slurp(IO::Factotum::open_input("$dir/big.c")), qr/\e\[/, 'no limit by 0';
 };
 
 subtest 'skylighting: file with ESC' => sub {
-    is slurp(IO::Polarizer::open_input("$dir/e.c")), "\e[31mred\e[m\n",
+    is slurp(IO::Factotum::open_input("$dir/e.c")), "\e[31mred\e[m\n",
 	'as it is';
 };
 
 subtest 'skylighting: no extension' => sub {
-    is slurp(IO::Polarizer::open_input("$dir/noext")), "#!/bin/bash\necho\n",
+    is slurp(IO::Factotum::open_input("$dir/noext")), "#!/bin/bash\necho\n",
 	'as it is';
 };
 
 subtest 'skylighting: setup twice' => sub {
-    IO::Polarizer::skylighting::setup();
-    like slurp(IO::Polarizer::open_input("$dir/a.c")), qr/\e\[/;
+    IO::Factotum::skylighting::setup();
+    like slurp(IO::Factotum::open_input("$dir/a.c")), qr/\e\[/;
 };
 
 subtest 'skylighting: -M ties ARGV' => sub {
-    my $out = qx{$^X -I"$lib" -MIO::Polarizer::skylighting -ne 'print "\$ARGV: \$_"' "$dir/a.c" 2>&1};
+    my $out = qx{$^X -I"$lib" -MIO::Factotum::skylighting -ne 'print "\$ARGV: \$_"' "$dir/a.c" 2>&1};
     like $out, qr/^\Q$dir\E\/a\.c: .*\e\[/, 'one-liner reads the colored text';
 };
 
-subtest 'Getopt::EX::Polarizer: load' => sub {
+subtest 'Getopt::EX::Factotum: load' => sub {
     my $script = put 'load.pl', q{
-	use Getopt::EX::Polarizer;
-	Getopt::EX::Polarizer::load(skylighting => 1);
+	use Getopt::EX::Factotum;
+	Getopt::EX::Factotum::load(skylighting => 1);
 	print tied(*ARGV) ? "tied\n" : "not tied\n";
-	print IO::Polarizer::open_input(shift)->getlines;
+	print IO::Factotum::open_input(shift)->getlines;
     };
     my $out = qx{$^X -I"$lib" "$script" "$dir/a.c" 2>&1};
     like $out, qr/\Anot tied\n/, 'ARGV is not tied';
@@ -121,23 +121,23 @@ subtest 'Getopt::EX::Polarizer: load' => sub {
 
 subtest 'load' => sub {
     my $script = put 'ioload.pl', q{
-	use IO::Polarizer;
-	IO::Polarizer::load('skylighting');
+	use IO::Factotum;
+	IO::Factotum::load('skylighting');
 	print tied(*ARGV) ? "tied\n" : "not tied\n";
-	print IO::Polarizer::open_input(shift)->getlines;
+	print IO::Factotum::open_input(shift)->getlines;
     };
     my $out = qx{$^X -I"$lib" "$script" "$dir/a.c" 2>&1};
     like $out, qr/\Anot tied\n/, 'ARGV is not tied';
     like $out, qr/\e\[/, 'has colors';
-    ok !eval { IO::Polarizer::load('nosuchconverter'); 1 }, 'unknown name dies';
+    ok !eval { IO::Factotum::load('nosuchconverter'); 1 }, 'unknown name dies';
     like $@, qr/nosuchconverter: no such converter/, 'with the name';
-    ok !eval { IO::Polarizer::load('a b'); 1 }, 'invalid name dies';
+    ok !eval { IO::Factotum::load('a b'); 1 }, 'invalid name dies';
 };
 
-subtest 'Getopt::EX::Polarizer: unknown name' => sub {
+subtest 'Getopt::EX::Factotum: unknown name' => sub {
     my $script = put 'unknown.pl', q{
-	use Getopt::EX::Polarizer;
-	Getopt::EX::Polarizer::load(nosuchconverter => 1);
+	use Getopt::EX::Factotum;
+	Getopt::EX::Factotum::load(nosuchconverter => 1);
     };
     my $out = qx{$^X -I"$lib" "$script" 2>&1};
     isnt $?, 0, 'fails';

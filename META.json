@@ -12,7 +12,7 @@
       "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
       "version" : 2
    },
-   "name" : "IO-Polarizer",
+   "name" : "IO-Factotum",
    "no_index" : {
       "directory" : [
          "t",
@@ -54,6 +54,17 @@
       }
    },
    "release_status" : "unstable",
+   "resources" : {
+      "bugtracker" : {
+         "web" : "https://github.com/tecolicom/IO-Factotum/issues"
+      },
+      "homepage" : "https://github.com/tecolicom/IO-Factotum",
+      "repository" : {
+         "type" : "git",
+         "url" : "https://github.com/tecolicom/IO-Factotum.git",
+         "web" : "https://github.com/tecolicom/IO-Factotum"
+      }
+   },
    "version" : "0.01",
    "x_authority" : "cpan:UTASHIRO",
    "x_contributors" : [
