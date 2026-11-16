@@ -113,7 +113,8 @@ Nothing is exported.
 
 # SEE ALSO
 
-[IO::Factotum::skylighting](https://metacpan.org/pod/IO%3A%3AFactotum%3A%3Askylighting), [Getopt::EX::Factotum](https://metacpan.org/pod/Getopt%3A%3AEX%3A%3AFactotum)
+[IO::Factotum::skylighting](https://metacpan.org/pod/IO%3A%3AFactotum%3A%3Askylighting), [IO::Factotum::sourcehighlight](https://metacpan.org/pod/IO%3A%3AFactotum%3A%3Asourcehighlight),
+[Getopt::EX::Factotum](https://metacpan.org/pod/Getopt%3A%3AEX%3A%3AFactotum)
 
 [Command::Run](https://metacpan.org/pod/Command%3A%3ARun)
 

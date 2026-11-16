@@ -150,7 +150,7 @@ distributions:
 
 =head1 SEE ALSO
 
-L<IO::Factotum>, L<Getopt::EX::Factotum>
+L<IO::Factotum>, L<IO::Factotum::sourcehighlight>, L<Getopt::EX::Factotum>
 
 L<https://github.com/jgm/skylighting>
 

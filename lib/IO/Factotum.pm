@@ -256,7 +256,8 @@ not supported.
 
 =head1 SEE ALSO
 
-L<IO::Factotum::skylighting>, L<Getopt::EX::Factotum>
+L<IO::Factotum::skylighting>, L<IO::Factotum::sourcehighlight>,
+L<Getopt::EX::Factotum>
 
 L<Command::Run>
 

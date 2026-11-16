@@ -31,12 +31,14 @@ jobs:
           perl-version: ${{ matrix.perl }}
       - name: Install dependencies
         run: cpanm -nq --metacpan --installdeps --with-develop --with-recommends .
-      # for t/03_skylighting.t, which is skipped without the command
-      - name: Install skylighting
+      # for t/03_skylighting.t and t/05_sourcehighlight.t, which are
+      # skipped without the commands
+      - name: Install highlighters
         run: |
           sudo apt-get update -q
-          sudo apt-get install -y -q skylighting
+          sudo apt-get install -y -q skylighting source-highlight
           skylighting --version
+          source-highlight --version | head -1
       - name: Run test
         run: prove -lr t
 
