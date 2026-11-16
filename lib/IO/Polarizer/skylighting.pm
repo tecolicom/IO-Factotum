@@ -18,10 +18,28 @@ sub match {
     index($content, "\e") < 0;
 }
 
+# Run skylighting on the file given as the last argument, and print
+# what it gives without the sequences which do nothing: skylighting
+# puts \e[22;23;24m after every reset, and resets twice at the top.
+# A line which ends with two sequences gets an empty line after it
+# when it is folded by Text::ANSI::Fold and the text fills the width.
+# This is called in a process of its own (Command::Run), and exits
+# with the status of skylighting when it fails.
+sub highlight {
+    my $file = $_[-1];
+    my $pid = open my $fh, '-|', @COMMAND, $file or exit 1;
+    my $out = do { local $/; <$fh> };
+    close $fh or exit(($? >> 8) || 1);
+    $out //= '';
+    $out =~ s/\e\[0m\K\e\[22;23;24m//g;
+    $out =~ s/\e\[0m\K(?:\e\[0m)+//g;
+    print $out;
+}
+
 my $done;
 sub setup {
     return if $done++;
-    IO::Polarizer::register(match => \&match, command => \@COMMAND);
+    IO::Polarizer::register(match => \&match, command => [ \&highlight ]);
     return;
 }
 
@@ -61,6 +79,9 @@ and so is a file which has an escape character already.
 The C<pygments> style, the default of pandoc, has no background
 color, and C<-C 16> uses the 16 colors of the terminal, so that the
 colors go with those of the terminal.
+
+The sequences which do nothing in the output of C<skylighting>, as
+C<ESC[22;23;24m> after every reset, are taken away.
 
 Loaded by C<use> or C<-M>, it also ties C<ARGV>
 (C<IO::Polarizer::tie_argv>), and a program which reads by

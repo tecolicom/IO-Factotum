@@ -46,6 +46,26 @@ subtest 'skylighting: C source' => sub {
     unlike $out, qr/\e\[[0-9;]*\b(?:4[0-7]|10[0-7]|[34]8)\b/, 'no background, 16 colors';
 };
 
+subtest 'skylighting: empty lines stay empty' => sub {
+    put 'b.c', "int x;\n\nint y;\n";
+    my @lines = IO::Polarizer::open_input("$dir/b.c")->getlines;
+    is scalar @lines, 3, 'three lines';
+    like $lines[0], qr/\e\[/, 'colored';
+    is $lines[1], "\n", 'the empty line has no sequence';
+};
+
+# skylighting puts \e[22;23;24m after every reset.  A line which ends
+# with two sequences makes Text::ANSI::Fold give an empty line after it
+# when the text fills the width.
+subtest 'skylighting: a line ends with one reset' => sub {
+    my $out = slurp(IO::Polarizer::open_input("$dir/a.c"));
+    unlike $out, qr/\e\[[0-9;]*m\e\[[0-9;]*m$/m, 'not two sequences at the end';
+    unlike $out, qr/\e\[0m\e\[0m/, 'no reset twice';
+    like $out, qr/\e\[0m$/m, 'reset at the end';
+    (my $text = $out) =~ s/\e\[[0-9;]*m//g;
+    is $text, "int x = 1;\n", 'the text is the same';
+};
+
 subtest 'skylighting: file with ESC' => sub {
     is slurp(IO::Polarizer::open_input("$dir/e.c")), "\e[31mred\e[m\n",
 	'as it is';
