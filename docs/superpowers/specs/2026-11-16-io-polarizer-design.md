@@ -180,3 +180,38 @@ IO::Polarizer を作る。偏光フィルターのように、元のファイル
   働かないため。up.pm と script/nup を 2 段で表示したとき、1519 行のうち 4 行。
 - 変換の出力は Command::Run が UTF-8 として読む。UTF-8 でないファイルを変換すると、
   文字が化ける可能性がある。確かめていない。
+
+## レビューを受けて変えたこと（2026-11-16）
+
+- **変換は IO::Polarizer が自分で fork して実行する**：Command::Run の実行部分は
+  使わず、Command::Run::Tmpfile の一時ファイルに、子プロセスの標準出力を直接
+  つなぐ。Command::Run は出力を UTF-8 として読むので、UTF-8 でない出力が化け、
+  警告が出ていた。標準エラーは capture をやめて捨てる（64KB を超えると止まって
+  いた）。子は `POSIX::_exit` で終わるので、呼び出し側の END ブロックは走らず、
+  eval の中で exec に失敗しても、子がプログラムの続きを実行しない。`$?` は保ち、
+  SIGCHLD が無視されていても動く。変換の書き方（配列、最後にファイル名）は
+  Command::Run と同じまま。
+- **標準入力は STDIN そのものを返す**：dup したハンドルは、STDIN が先読みした
+  分を読めなかった。
+- **skylighting**：CR LF を分断しない。空のファイルと 256KB を超えるファイルは
+  変換しない（`$IO::Polarizer::skylighting::MAX_SIZE`）。5.9MB のファイルで
+  2.5 秒が 42 秒になっていた。
+- **nup は IO::Polarizer がなければ `--polarizer` を付けない**：up.pm が @INC を
+  探す。skylighting だけがある環境で、ファイル表示がすべてエラーになっていた。
+
+### リリースのときに要ること
+
+- nup の cpanfile で、`--polarizer` を持つ ansicolumn の版と IO::Polarizer を
+  必須にする。古い ansicolumn に `--polarizer` を渡すと `Unknown option` になる。
+- 順序は IO-Polarizer、ansicolumn、nup。
+
+### 直していない指摘（軽いもの）
+
+- tie した `<>` は `-C` や `use open` の層を見ない。`binmode ARGV` などの
+  メソッド（BINMODE、GETC、READ、FILENO）もない。
+- `-` で始まるファイル名は、変換のコマンドにオプションとして渡る（結果は色なし）。
+- `--polarizer` を付けると、ansicolumn の 2 引数 open の動き（`'cmd |'`）が
+  なくなる。nup は既定で付ける。
+- 読み終えた後の `<>` は、素の perl と違い、STDIN を読まない。
+- `--polarizer requires IO::Polarizer.` は、読み込みに失敗した本当の理由を出さない。
+- nup → up.pm → 本物の ansicolumn → skylighting を通すテストはない。
