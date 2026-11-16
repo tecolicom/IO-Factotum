@@ -80,6 +80,25 @@ Nothing is exported.
 
     The name `-` is the standard input, which is not converted.
 
+- **tie\_argv**()
+
+    Tie `ARGV`, so that `<>` reads the files of `@ARGV` by
+    `open_input`.  A program which reads by `<>` gets the
+    converted content with no change in it:
+
+        IO::Polarizer::tie_argv();
+        while (<>) {
+            print "$ARGV: $_";
+        }
+
+    `@ARGV` is looked at when the first line is read, so the options can
+    be taken from it before.  As with the plain `<>`, `$ARGV`
+    is the name of the file, `$.` counts the lines of all the files,
+    `eof()` is true at the end of the last file, `close ARGV` starts
+    the line numbers again, and the standard input is read when there is
+    no file.  `<<>>` and the `-i` option of perl are
+    not supported.
+
 # SEE ALSO
 
 [Command::Run](https://metacpan.org/pod/Command%3A%3ARun)

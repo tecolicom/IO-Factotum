@@ -70,6 +70,13 @@ sub open_input {
     $converted;
 }
 
+sub tie_argv {
+    return if tied *ARGV;
+    require IO::Polarizer::ARGV;
+    tie *ARGV, 'IO::Polarizer::ARGV';
+    return;
+}
+
 1;
 
 __END__
@@ -158,6 +165,25 @@ The handle has the C<:raw> layer.  Set the encoding by C<binmode>:
     binmode $fh, ':encoding(utf8)';
 
 The name C<-> is the standard input, which is not converted.
+
+=item B<tie_argv>()
+
+Tie C<ARGV>, so that C<E<lt>E<gt>> reads the files of C<@ARGV> by
+C<open_input>.  A program which reads by C<E<lt>E<gt>> gets the
+converted content with no change in it:
+
+    IO::Polarizer::tie_argv();
+    while (<>) {
+        print "$ARGV: $_";
+    }
+
+C<@ARGV> is looked at when the first line is read, so the options can
+be taken from it before.  As with the plain C<E<lt>E<gt>>, C<$ARGV>
+is the name of the file, C<$.> counts the lines of all the files,
+C<eof()> is true at the end of the last file, C<close ARGV> starts
+the line numbers again, and the standard input is read when there is
+no file.  C<E<lt>E<lt>E<gt>E<gt>> and the C<-i> option of perl are
+not supported.
 
 =back
 
