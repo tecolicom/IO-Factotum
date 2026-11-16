@@ -1,4 +1,4 @@
-package IO::Factotum::sourcehighlight;
+package IO::Factotum::Highlight::sourcehighlight;
 
 use v5.16;
 use warnings;
@@ -58,13 +58,13 @@ __END__
 
 =head1 NAME
 
-IO::Factotum::sourcehighlight - syntax highlight by GNU Source-highlight
+IO::Factotum::Highlight::sourcehighlight - syntax highlight by GNU Source-highlight
 
 =head1 SYNOPSIS
 
-    perl -MIO::Factotum::sourcehighlight -ne 'print' file.c
+    perl -MIO::Factotum::Highlight::sourcehighlight -ne 'print' file.c
 
-    ansicolumn --factotum=sourcehighlight file.c file.h
+    ansicolumn --highlight=sourcehighlight file.c file.h
 
 =head1 DESCRIPTION
 
@@ -80,14 +80,14 @@ The language is told by C<source-highlight> from the name of the
 file, and that of a script from its first line.  A file whose
 language is not known is read as it is, and so are a file which has
 an escape character already, an empty file, and a file larger than
-C<$IO::Factotum::sourcehighlight::MAX_SIZE> bytes (256 KB by default,
+C<$IO::Factotum::Highlight::sourcehighlight::MAX_SIZE> bytes (256 KB by default,
 0 for no limit).
 
 The colors are those of C<esc.style>, which comes with
-C<source-highlight>.  Set C<@IO::Factotum::sourcehighlight::STYLE> to
+C<source-highlight>.  Set C<@IO::Factotum::Highlight::sourcehighlight::STYLE> to
 use another style file:
 
-    @IO::Factotum::sourcehighlight::STYLE = ('--style-file=my.style');
+    @IO::Factotum::Highlight::sourcehighlight::STYLE = ('--style-file=my.style');
 
 Loaded by C<use> or C<-M>, it also ties C<ARGV>
 (C<IO::Factotum::tie_argv>), and a program which reads by
@@ -103,7 +103,8 @@ distributions:
 
 =head1 SEE ALSO
 
-L<IO::Factotum>, L<IO::Factotum::skylighting>
+L<IO::Factotum>, L<IO::Factotum::Highlight::gnu>,
+L<IO::Factotum::Highlight::skylighting>
 
 L<https://www.gnu.org/software/src-highlite/>
 

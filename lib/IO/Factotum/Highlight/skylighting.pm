@@ -1,4 +1,4 @@
-package IO::Factotum::skylighting;
+package IO::Factotum::Highlight::skylighting;
 
 use v5.16;
 use warnings;
@@ -104,13 +104,13 @@ __END__
 
 =head1 NAME
 
-IO::Factotum::skylighting - syntax highlight by skylighting
+IO::Factotum::Highlight::skylighting - syntax highlight by skylighting
 
 =head1 SYNOPSIS
 
-    perl -MIO::Factotum::skylighting -ne 'print' file.c
+    perl -MIO::Factotum::Highlight::skylighting -ne 'print' file.c
 
-    ansicolumn --factotum=skylighting file.c file.h
+    ansicolumn --highlight file.c file.h
 
 =head1 DESCRIPTION
 
@@ -125,7 +125,7 @@ When the name does not tell it, as that of a script without an
 extension, the interpreter on the first line does (C<#!/usr/bin/env
 perl>, C<#!/bin/bash>).  A file whose language is not known is read as
 it is, and so are a file which has an escape character already, an empty
-file, and a file larger than C<$IO::Factotum::skylighting::MAX_SIZE>
+file, and a file larger than C<$IO::Factotum::Highlight::skylighting::MAX_SIZE>
 bytes (256 KB by default, 0 for no limit): the colored text is many
 times larger than the file and takes time to process.
 
@@ -150,7 +150,8 @@ distributions:
 
 =head1 SEE ALSO
 
-L<IO::Factotum>, L<IO::Factotum::sourcehighlight>, L<Getopt::EX::Factotum>
+L<IO::Factotum>, L<IO::Factotum::Highlight::sky>,
+L<IO::Factotum::Highlight::sourcehighlight>, L<Getopt::EX::Factotum>
 
 L<https://github.com/jgm/skylighting>
 
