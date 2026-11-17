@@ -19,7 +19,7 @@ IO::Factotum - read files through a converter chosen by their names
 
 # VERSION
 
-Version 0.03
+Version 0.04
 
 # DESCRIPTION
 
