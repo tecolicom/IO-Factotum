@@ -3,7 +3,7 @@ package IO::Factotum;
 use v5.16;
 use warnings;
 
-our $VERSION = "0.04";
+our $VERSION = "0.05";
 
 use Carp;
 use Scalar::Util ();
@@ -199,7 +199,7 @@ IO::Factotum - read files through a converter chosen by their names
 
 =head1 VERSION
 
-Version 0.04
+Version 0.05
 
 =head1 DESCRIPTION
 
